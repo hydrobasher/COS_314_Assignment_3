@@ -40,4 +40,31 @@ public class boob {
         this.breast_quad = Integer.parseInt(parts[8]);
         this.irradiat = Integer.parseInt(parts[9]);
     }
+
+    public int getAttribute(int attribute) {
+        switch (attribute) {
+            case 0:
+                return this.recurrence;
+            case 1:
+                return this.age;
+            case 2:
+                return this.menopause;
+            case 3:
+                return this.tumor_size;
+            case 4:
+                return this.inv_nodes;
+            case 5:
+                return this.node_caps;
+            case 6:
+                return this.deg_malig;
+            case 7:
+                return this.breast;
+            case 8:
+                return this.breast_quad;
+            case 9:
+                return this.irradiat;
+            default:
+                throw new IllegalArgumentException(attribute + " is an invalid attribute :(");
+        }
+    }
 }
