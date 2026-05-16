@@ -6,7 +6,7 @@ import java.util.ArrayList;
 public class dataset {
     // public final so it doesn't get accidently modified
 
-    public final ArrayList<boob> data;
+    public final ArrayList<breastData> data;
 
     // Takes in a filename, depending on how u run the program, it'll either be:
     // "src/main/java/Breast_train.csv" or "Breast_train.csv"
@@ -25,7 +25,7 @@ public class dataset {
 
                 if (line == "") break;
 
-                data.add(new boob(line));
+                data.add(new breastData(line));
             }
             scanner.close();
         } catch (FileNotFoundException e) {

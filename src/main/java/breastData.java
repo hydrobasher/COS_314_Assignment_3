@@ -1,4 +1,4 @@
-public class boob {
+public class breastData {
     // These are all public final. 
     // public for easy access
     // final so they don't get accidently modified
@@ -14,7 +14,7 @@ public class boob {
     public final int breast_quad;
     public final int irradiat;
 
-    public boob(int recurrence, int age, int menopause, int tumor_size, int inv_nodes, int node_caps, int deg_malig, int breast, int breast_quad, int irradiat) {
+    public breastData(int recurrence, int age, int menopause, int tumor_size, int inv_nodes, int node_caps, int deg_malig, int breast, int breast_quad, int irradiat) {
         this.recurrence = recurrence;
         this.age = age;
         this.menopause = menopause;
@@ -27,7 +27,7 @@ public class boob {
         this.irradiat = irradiat;
     }
 
-    public boob(String line) {
+    public breastData(String line) {
         String[] parts = line.split(",");
         this.recurrence = Integer.parseInt(parts[0]);
         this.age = Integer.parseInt(parts[1]);
