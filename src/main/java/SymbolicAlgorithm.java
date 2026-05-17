@@ -86,7 +86,7 @@ public class SymbolicAlgorithm {
 
         System.out.println("\nAverage Training Score: "+avgTrainingScore);
         System.out.println("Average Test Score: "+avgTestScore);
-        System.out.println("Average Run Time: "+avgRunTime);
+        System.out.println("Average Run Time: "+avgRunTime+" ms");
     }
 
     private static void run(Random bigR, dataset ds, Solution[] bestIndividuals, int runs, long[] runTimes, boolean trainingDemo) {
