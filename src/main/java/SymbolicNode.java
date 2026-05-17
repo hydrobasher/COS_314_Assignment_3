@@ -44,7 +44,7 @@ public class SymbolicNode {
         this.right = right;
     }
 
-    double resolve(breastData data) {
+    double resolve(boob data) {
         if (isTerminal) {
             if (!value[0] && !value[1] && !value[2] && !value[3]) { // 0000
                 return data.age;

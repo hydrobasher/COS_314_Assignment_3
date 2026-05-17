@@ -30,7 +30,7 @@ public class SymbolicAlgorithm {
         run(bigR, ds, bestIndividuals, runs, runTimes);
         ds = new dataset("src/main/java/Breast_test.csv");
 
-        double testScore[] = new double[runs];
+        double[] testScore = new double[runs];
         int[][] fMeasureTracker = new int[runs][];
 
         for (int i = 0; i < runs; i++) {
@@ -41,7 +41,7 @@ public class SymbolicAlgorithm {
 
             int correct = 0;
 
-            for (breastData dataPoint : ds.data) {
+            for (boob dataPoint : ds.data) {
                 double output = bestIndividuals[i].root.resolve(dataPoint);
                 int predicted = (output > 0) ? 1 : 0; // threshold = 0
                 if (predicted == dataPoint.recurrence) {
@@ -93,7 +93,7 @@ public class SymbolicAlgorithm {
             ArrayList<Solution> sortedPopulation = new ArrayList<>();
 
             for (int i = 0; i < sm.maxGenerations; i++) {
-                //System.out.println("Best Individual: " + fitnessScores.peek().root.toString()+ "\nFitness Score: " + (1.0-fitnessScores.peek().fitness));
+                System.out.println("Best Individual: " + fitnessScores.peek().root.toString()+ "\nFitness Score: " + (1.0-fitnessScores.peek().fitness));
                 bestIndividuals[k]=new Solution(fitnessScores.peek().root.cloneSubTree(), fitnessScores.peek().fitness);
                 SymbolicNode theBest = fitnessScores.peek().root.cloneSubTree();
 
@@ -101,7 +101,7 @@ public class SymbolicAlgorithm {
                 selectionTransforms(sortedPopulation, fitnessScores);
 
                 ArrayList<SymbolicNode> offspring = sm.crossover(sortedPopulation);
-                offspring = sm.mutatePopulation(offspring);
+                sm.mutatePopulation(offspring);
 
                 sm.population[0] = theBest;
                 for (int j = 0; j < offspring.size() && j + 1 < sm.populationSize; j++) {
@@ -114,14 +114,13 @@ public class SymbolicAlgorithm {
         }
     }
 
-    private ArrayList<SymbolicNode> mutatePopulation(ArrayList<SymbolicNode> offspring) {
-        for (int i = 0; i < offspring.size(); i++) {
-            if(random.nextDouble()<mutationRate){
-                int mutationPoint = random.nextInt(offspring.get(i).size());
-                offspring.get(i).get(new int[]{mutationPoint}).mutate(random);
+    private void mutatePopulation(ArrayList<SymbolicNode> offspring) {
+        for (SymbolicNode symbolicNode : offspring) {
+            if (random.nextDouble() < mutationRate) {
+                int mutationPoint = random.nextInt(symbolicNode.size());
+                symbolicNode.get(new int[]{mutationPoint}).mutate(random);
             }
         }
-        return offspring;
     }
 
     private static void selectionTransforms(ArrayList<Solution> sortedPopulation,
@@ -171,7 +170,7 @@ public class SymbolicAlgorithm {
     }
 
     void generateInitialPopulation() {
-        int depths[] = new int[initialTreeDepth - 1];
+        int[] depths = new int[initialTreeDepth - 1];
         for (int i = 2; i <= initialTreeDepth; i++) {
             depths[i - 2] = i;
         }
@@ -181,7 +180,7 @@ public class SymbolicAlgorithm {
 
         population = new SymbolicNode[populationSize];
         int tail = 0;
-        for (int _ : depths) {
+        for (int ignored : depths) {
             int fullCount = perLevel / 2;
             int growCount = perLevel - fullCount;
 
@@ -210,7 +209,7 @@ public class SymbolicAlgorithm {
         double chooser = random.nextDouble();
         boolean[] function = new boolean[3];
         boolean isUnary = populateEncodedFunctions(chooser, function);
-        SymbolicNode left = null, right = null;
+        SymbolicNode left, right = null;
 
         if (isUnary) {
             left = generateFullTree(currentDepth + 1);
@@ -230,17 +229,17 @@ public class SymbolicAlgorithm {
         }
         //first 9 - terminals
         //rest - functions
-        double seventeenth = 1/16;
+        double sixteenth = 1.0/16.0;
         double chooser = random.nextDouble();
 
-        if (chooser < seventeenth*9) {// terminals
-            chooser*=19/9;//expand to use with the 9 terminals
+        if (chooser < sixteenth*9) {// terminals
+            chooser*=19.0/9.0;//expand to use with the 9 terminals
             boolean[] value = new boolean[4];
             populateEncodedTerminals(chooser, value);
             return new SymbolicNode(null, value, true, null, null);
         }
         else {//functions
-            chooser=(chooser-seventeenth*9)*19/9;//expand to use with the 7 functions
+            chooser=(chooser-sixteenth*9)*19/9;//expand to use with the 7 functions
             boolean[] function = new boolean[3];
             boolean isUnary = populateEncodedFunctions(chooser, function);
             if (isUnary) return new SymbolicNode(function, null, false, generateGrowTree(currentDepth+1), null);
@@ -342,13 +341,13 @@ public class SymbolicAlgorithm {
     calculates the accuracy of each solution for each entry of sample data
     returns an array of the results.
      */
-    public PriorityQueue<Solution> evaluateFitness(ArrayList<breastData> data) {
+    public PriorityQueue<Solution> evaluateFitness(ArrayList<boob> data) {
         PriorityQueue<Solution> minHeap = new PriorityQueue<>();
 
         for (int i = 0; i < populationSize; i++) {
             int correct = 0;
 
-            for (breastData dataPoint : data) {
+            for (boob dataPoint : data) {
                 double output = population[i].resolve(dataPoint);
                 int predicted = (output > 0) ? 1 : 0; // threshold = 0
                 if (predicted == dataPoint.recurrence) {
@@ -372,7 +371,7 @@ public class SymbolicAlgorithm {
             SymbolicNode parent1 = selectOne(selection);
             SymbolicNode parent2 = selectOne(selection);
 
-            if(random.nextDouble()<crossoverRate){
+            if (random.nextDouble() < crossoverRate && parent1.size() > 1 && parent2.size() > 1) {
                 int parent1CrossPoint = 1 + random.nextInt(parent1.size() - 1);
                 int parent2CrossPoint = 1 + random.nextInt(parent2.size() - 1);
 
