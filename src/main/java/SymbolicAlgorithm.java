@@ -31,7 +31,14 @@ public class SymbolicAlgorithm {
         ds = new dataset("src/main/java/Breast_test.csv");
 
         double testScore[] = new double[runs];
+        int[][] fMeasureTracker = new int[runs][];
+
         for (int i = 0; i < runs; i++) {
+            fMeasureTracker[i] = new int[4];//true positive(11), true negative(00), false positive(10), false negative(01)
+            for (int j = 0; j < 4; j++) {
+                fMeasureTracker[i][j]=0;
+            }
+
             int correct = 0;
 
             for (boob dataPoint : ds.data) {
@@ -40,12 +47,25 @@ public class SymbolicAlgorithm {
                 if (predicted == dataPoint.recurrence) {
                     correct++;
                 }
+                if(predicted==0 && dataPoint.recurrence==0){
+                    fMeasureTracker[i][0]++;
+                }
+                else if(predicted==1 && dataPoint.recurrence==1){
+                    fMeasureTracker[i][1]++;
+                }
+                else if(predicted==1 && dataPoint.recurrence==0){
+                    fMeasureTracker[i][2]++;
+                }
+                else{
+                    fMeasureTracker[i][3]++;
+                }
             }
 
             double accuracy = (double) correct / ds.data.size();
             testScore[i]=accuracy;
 
             System.out.println("Run "+(i+1)+": "+(1.0-bestIndividuals[i].fitness)+ "\tTest Score: "+accuracy+"\t Runtime: "+ runTimes[i]+ " ms");
+            System.out.println("\tTrue Positives: "+fMeasureTracker[i][0]+"\tTrue Negatives: "+fMeasureTracker[i][1]+"\tFalse Positives: "+fMeasureTracker[i][2]+"\tFalse Negatives: "+fMeasureTracker[i][3]);
         }
         double avgTrainingScore = 0.0;
         double avgTestScore = 0.0;
