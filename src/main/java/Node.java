@@ -1,7 +1,14 @@
 // This class represents a node in the decision tree used in the genetic programming algorithm.
 // Each node is represents : next = (type < value) ? YES : NO
 
-public class logicalNode {
+public class Node {
+    public Node YES;
+    public Node NO;
+
+    public boolean isLeaf;
+};
+
+class logicalNode extends Node {
     // 0 = recurrence
     // 1 = age
     // 2 = menopause
@@ -16,18 +23,13 @@ public class logicalNode {
 
     public int value;
 
-    public logicalNode YES;
-    public logicalNode NO;
-
-    public boolean recurrence;
-
     public logicalNode(int attribute, int value) {
         this.attribute = attribute;
         this.value = value;
         this.YES = null;
         this.NO = null;
 
-        this.recurrence = false;
+        this.isLeaf = false;
     }
 
     private int randomHelper(int attrib) {
@@ -62,7 +64,17 @@ public class logicalNode {
         this.value = (int) (Math.random() * randomHelper(attribute));
         this.YES = null;
         this.NO = null;
+        this.isLeaf = false;
+    }
+}
 
-        this.recurrence = (Math.random() < 0.5);
+class logicalLeaf extends logicalNode {
+    public boolean recurrence;
+
+    public logicalLeaf() {
+        this.recurrence = Math.random() < 0.5;
+        this.YES = null;
+        this.NO = null;
+        this.isLeaf = true;
     }
 }
