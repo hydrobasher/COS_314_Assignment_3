@@ -41,7 +41,7 @@ public class SymbolicAlgorithm {
 
             int correct = 0;
 
-            for (boob dataPoint : ds.data) {
+            for (breastData dataPoint : ds.data) {
                 double output = bestIndividuals[i].root.resolve(dataPoint);
                 int predicted = (output > 0) ? 1 : 0; // threshold = 0
                 if (predicted == dataPoint.recurrence) {
@@ -81,7 +81,7 @@ public class SymbolicAlgorithm {
 
         System.out.println("\nAverage Training Score: "+avgTrainingScore);
         System.out.println("Average Test Score: "+avgTestScore);
-        System.out.println("Average Run Time: "+avgRunTime);
+        System.out.println("Average Run Time: "+avgRunTime+" ms");
     }
 
     private static void run(Random bigR, dataset ds, Solution[] bestIndividuals, int runs, long[] runTimes) {
@@ -341,13 +341,13 @@ public class SymbolicAlgorithm {
     calculates the accuracy of each solution for each entry of sample data
     returns an array of the results.
      */
-    public PriorityQueue<Solution> evaluateFitness(ArrayList<boob> data) {
+    public PriorityQueue<Solution> evaluateFitness(ArrayList<breastData> data) {
         PriorityQueue<Solution> minHeap = new PriorityQueue<>();
 
         for (int i = 0; i < populationSize; i++) {
             int correct = 0;
 
-            for (boob dataPoint : data) {
+            for (breastData dataPoint : data) {
                 double output = population[i].resolve(dataPoint);
                 int predicted = (output > 0) ? 1 : 0; // threshold = 0
                 if (predicted == dataPoint.recurrence) {
