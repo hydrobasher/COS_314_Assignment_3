@@ -29,7 +29,7 @@ public class SymbolicAlgorithm {
         dataset ds = new dataset("Breast_train.csv");
 
         Random bigR = new Random(314);
-        int runs = (trainingDemo) ? 2 : 10;
+        int runs = (trainingDemo) ? 2 : 30;
         Solution[] bestIndividuals = new Solution[runs];
         long[] runTimes = new long[runs];
         run(bigR, ds, bestIndividuals, runs, runTimes, trainingDemo);
