@@ -1,63 +1,80 @@
 import java.util.ArrayList;
 
-public class decisionTree {
+public class decisionTreeOld {
     final static int startDepth = 3;
     final static int maxDepth = 5;
-    final static int populationSize = 30;
+    final static int populationSize = 20;
     final static int tournamentSize = 20;
+    final static int maxGenerations = 2;
+
+    boolean debug = false;
 
     dataset data;
 
-    logicalProgram bestProgram;
+    logicalProgramOld bestProgram;
     float bestFitness;
 
-    private ArrayList<logicalProgram> population;
+    private ArrayList<logicalProgramOld> population;
 
-    public decisionTree(String filePath) {
+    public decisionTreeOld(String filePath) {
         this.data = new dataset(filePath);
     }
 
     private void initialisePopulation() {
-        population = new ArrayList<logicalProgram>();
+        population = new ArrayList<logicalProgramOld>();
 
         for (int i = startDepth; i <= maxDepth; i++) {
             int numIndividuals = populationSize / (maxDepth - startDepth + 1) / 2;
 
             for (int j = 0; j < numIndividuals; j++) {
-                logicalProgram individual = new logicalProgram();
+                logicalProgramOld individual = new logicalProgramOld();
                 individual.full(i);
                 population.add(individual);
+                if (individual.root.isLeaf) {
+                    System.out.println("CHECK INITIALISE POPULATION FULL");
+                    System.out.println(i);
+                }
             }
 
             for (int j = 0; j < numIndividuals; j++) {
-                logicalProgram individual = new logicalProgram();
+                logicalProgramOld individual = new logicalProgramOld();
                 individual.grow(i);
                 population.add(individual);
+                if (individual.root.isLeaf) {
+                    System.out.println("CHECK INITIALISE POPULATION GROW");
+                    System.out.println(i);
+                }
             }
         }
     }
 
     private void findBest(){
-        for (logicalProgram individual : population) {
+        for (logicalProgramOld individual : population) {
             float fitness = individual.fitness(data);
 
             if (fitness > bestFitness) {
+                if (debug) {
+                    System.out.println("New best fitness: " + fitness);
+                    System.out.println("Best program:");
+                    individual.print();
+                }
+                
                 bestFitness = fitness;
                 bestProgram = individual;
             }
         }
     }
 
-    public logicalProgram select(int t){
+    public logicalProgramOld select(int t){
         int[] tournament = new int[t];
         for (int i = 0; i < t; i++) {
             tournament[i] = (int) (Math.random() * population.size());
         }
 
-        logicalProgram tourneyBestProgram = population.get(tournament[0]);
+        logicalProgramOld tourneyBestProgram = population.get(tournament[0]);
         float tourneyBestFitness = tourneyBestProgram.fitness(data);
         for (int i = 1; i < t; i++) {
-            logicalProgram individual = population.get(tournament[i]);
+            logicalProgramOld individual = population.get(tournament[i]);
             float fitness = individual.fitness(data);
 
             if (fitness > tourneyBestFitness) {
@@ -68,12 +85,12 @@ public class decisionTree {
         return tourneyBestProgram;
     }
 
-    public ArrayList<logicalProgram> crossover(ArrayList<logicalProgram> toBreed) {
-        ArrayList<logicalProgram> newPopulation = new ArrayList<logicalProgram>();
+    public ArrayList<logicalProgramOld> crossover(ArrayList<logicalProgramOld> toBreed) {
+        ArrayList<logicalProgramOld> newPopulation = new ArrayList<logicalProgramOld>();
 
         for (int i = 0; i < toBreed.size() - 1; i += 2) {
-            logicalProgram p1 = toBreed.get(i);
-            logicalProgram p2 = toBreed.get(i + 1);
+            logicalProgramOld p1 = toBreed.get(i).copy();
+            logicalProgramOld p2 = toBreed.get(i + 1).copy();
 
             logicalNode parent1 = p1.getRandomNode();
             logicalNode parent2 = p2.getRandomNode();
@@ -81,31 +98,17 @@ public class decisionTree {
             boolean crossoverSide1 = (Math.random() < 0.5);
             boolean crossoverSide2 = (Math.random() < 0.5);
 
-            try {
-            
-                Node crossover1 = crossoverSide1? parent1.YES : parent1.NO;
-                Node crossover2 = crossoverSide2? parent2.YES : parent2.NO;
+            NodeOld crossover1 = crossoverSide1 ? parent1.YES : parent1.NO;
+            NodeOld crossover2 = crossoverSide2 ? parent2.YES : parent2.NO;
 
-                if (crossover1 == null || crossover2 == null) {
-                    System.out.println("This should never run");
-                    continue;
-                } 
-            } catch (Exception e) {
-                System.out.println(e);
+            if (crossoverSide1) parent1.YES = crossover2;
+            else parent1.NO = crossover2;
 
-                
+            if (crossoverSide2) parent2.YES = crossover1;
+            else parent2.NO = crossover1;
 
-                continue;
-            }
-
-            // if (crossoverSide1) parent1.YES = crossover2;
-            // else parent1.NO = crossover2;
-
-            // if (crossoverSide2) parent2.YES = crossover1;
-            // else parent2.NO = crossover1;
-
-            // newPopulation.add(p1);
-            // newPopulation.add(p2);
+            newPopulation.add(p1);
+            newPopulation.add(p2);
         }
     
         return newPopulation;
@@ -115,26 +118,21 @@ public class decisionTree {
         System.out.println("Running decision tree");
         initialisePopulation();
         System.out.println("Initial population size: " + population.size());
-
-        bestFitness = 0;
         findBest();
-        System.out.println("Best fitness: " + bestFitness);
+        debug = true;
 
-        for (int generation = 1; generation <= 2 && bestFitness < 0.99; generation++) {
-            System.out.println("Generation " + generation);
+        for (int generation = 0; generation < maxGenerations; generation++) {
+            findBest();
+            System.out.println("Generation " + generation + " best fitness: " + bestFitness);
 
-            ArrayList<logicalProgram> toBreed = new ArrayList<logicalProgram>();
-            for (int i = 0; i < population.size(); i++) {
-                logicalProgram selected = select(tournamentSize);
-
-                toBreed.add(selected);
+            ArrayList<logicalProgramOld> toBreed = new ArrayList<logicalProgramOld>();
+            for (int i = 0; i < populationSize; i++) {
+                toBreed.add(select(tournamentSize));
             }
 
-            ArrayList<logicalProgram> newPopulation = crossover(toBreed);
-
-            population = newPopulation;
-            findBest();
-            System.out.println("Best fitness: " + bestFitness);
+            population = crossover(toBreed);
+            System.out.println(population.get(0).fitness(data));
+            population.get(0).print();
         }
 
         // for (int i = 0; i < population.size(); i++) {
@@ -143,7 +141,7 @@ public class decisionTree {
         //     System.out.println("Individual " + i + " fitness: " + fitness);
         // }
 
-        System.out.println("Final Best fitness: " + bestFitness);
+        // System.out.println("Final Best fitness: " + bestFitness);
         
         // 1: Initialise population with random individuals (programs)
         // 2: Define fitness function to evaluate individuals
@@ -157,7 +155,7 @@ public class decisionTree {
     }
 
     public static void main(String[] args) {
-        decisionTree GP = new decisionTree("src/main/java/Breast_train.csv");
+        decisionTreeOld GP = new decisionTreeOld("src/main/java/Breast_train.csv");
         GP.run();
     }
 }

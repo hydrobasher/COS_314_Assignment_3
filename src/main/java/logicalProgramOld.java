@@ -1,11 +1,13 @@
-public class LogicalProgram {
-    public Node root;
+// This class represents an individual in the decision tree genetic programming algorithm.
 
-    public LogicalProgram() {
+public class logicalProgramOld {
+    public NodeOld root;
+
+    public logicalProgramOld() {
         this.root = null;
     }
 
-    private Node copyHelper(Node toCopy) {
+    private NodeOld copyHelper(NodeOld toCopy) {
         if (toCopy == null) return null;
 
         if (toCopy.isLeaf) {
@@ -20,13 +22,13 @@ public class LogicalProgram {
         return node;
     }
 
-    public LogicalProgram copy(){
-        LogicalProgram copy = new LogicalProgram();
+    public logicalProgramOld copy(){
+        logicalProgramOld copy = new logicalProgramOld();
         copy.root = copyHelper(this.root);
         return copy;
     }
 
-    private Node growHelper(int depth) {
+    private NodeOld growHelper(int depth) {
         if (depth <= 0 || Math.random() < 0.1) {
             logicalLeaf leaf = new logicalLeaf();
             return leaf;
@@ -52,17 +54,17 @@ public class LogicalProgram {
         } else {
             this.root = new logicalNode();
 
-            LogicalProgram left = new LogicalProgram();
+            logicalProgramOld left = new logicalProgramOld();
             left.full(depth - 1);
             this.root.YES = left.root;
-            LogicalProgram right = new LogicalProgram();
+            logicalProgramOld right = new logicalProgramOld();
             right.full(depth - 1);
             this.root.NO = right.root;
         }
     }
 
     public boolean evaluate(breastData data) {
-        Node ptr = this.root;
+        NodeOld ptr = this.root;
 
         while (!ptr.isLeaf) {
             int value = data.getAttribute(((logicalNode) ptr).attribute);
@@ -96,7 +98,7 @@ public class LogicalProgram {
         return (float) count / data.data.size();
     }
 
-    private Node getNodeHelper(Node node, int[] target) {
+    private NodeOld getNodeHelper(NodeOld node, int[] target) {
         if (node == null) {
             System.out.println("This should never run");
             return null;
@@ -107,7 +109,7 @@ public class LogicalProgram {
         if (target[0] == 0) return node;
         target[0]--;
 
-        Node left = getNodeHelper(node.YES, target);
+        NodeOld left = getNodeHelper(node.YES, target);
 
         if (left != null) 
             return left;
@@ -115,7 +117,7 @@ public class LogicalProgram {
         return getNodeHelper(node.NO, target);
     }
 
-    public int numberOfNonLeafNodes(Node node) {
+    public int numberOfNonLeafNodes(NodeOld node) {
         if (node == null || node.isLeaf) return 0;
 
         return 1 + numberOfNonLeafNodes(node.YES) + numberOfNonLeafNodes(node.NO);
@@ -128,7 +130,7 @@ public class LogicalProgram {
         int[] target = {(int) (Math.random() * numNodes)};
         int shi = target[0];
     
-        Node temp = getNodeHelper(root, target);
+        NodeOld temp = getNodeHelper(root, target);
 
         if (temp == null || temp.isLeaf) {
             System.out.println("CHECK GET RANDOM NODE");
@@ -141,7 +143,7 @@ public class LogicalProgram {
         return (logicalNode) temp;
     }
 
-    public void printHelper(Node node, int depth) {
+    public void printHelper(NodeOld node, int depth) {
         if (node == null) return;
 
         for (int i = 0; i < depth; i++) {
