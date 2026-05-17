@@ -4,7 +4,7 @@ import java.util.PriorityQueue;
 import java.util.Random;
 
 public class SymbolicAlgorithm {
-    final int populationSize = 20;//N
+    final int populationSize = 200;//N
     //Initial tree generation ramped half-and-half
     int initialTreeDepth;//D
     int maxOffspringDepth = 10;
@@ -16,7 +16,7 @@ public class SymbolicAlgorithm {
     //mutation type=point
     int mutationOffspringDepth;
     //Fitness function accuracy
-    final int maxGenerations = 10;
+    final int maxGenerations = 100;
     Random random;
     SymbolicNode[] population;
 

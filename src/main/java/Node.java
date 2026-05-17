@@ -32,7 +32,7 @@ class logicalNode extends Node {
         this.isLeaf = false;
     }
 
-    private int randomHelper(int attrib) {
+    public int randomHelper(int attrib) {
         switch (attrib) {
             case 0:
                 return 2;

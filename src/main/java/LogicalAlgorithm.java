@@ -4,7 +4,7 @@ import java.util.PriorityQueue;
 import java.util.Random;
 
 public class LogicalAlgorithm {
-    final int populationSize = 20;//N
+    final int populationSize = 200;//N
     //Initial tree generation ramped half-and-half
     int initialTreeDepth;//D
     int maxOffspringDepth = 10;
@@ -16,7 +16,7 @@ public class LogicalAlgorithm {
     //mutation type=point
     int mutationOffspringDepth;
     //Fitness function accuracy
-    final int maxGenerations = 10;
+    final int maxGenerations = 100;
     Random random;
     LogicalProgram[] population;
 
@@ -97,9 +97,6 @@ public class LogicalAlgorithm {
     private ArrayList<LogicalProgram> mutatePopulation(ArrayList<LogicalProgram> offspring) {
         for (int i = 0; i < offspring.size(); i++) {
             if(random.nextDouble()<mutationRate){
-                // int mutationPoint = random.nextInt(offspring.get(i).size());
-                // offspring.get(i).get(new int[]{mutationPoint}).mutate(random);
-
                 offspring.get(i).mutate(random);
             }
         }

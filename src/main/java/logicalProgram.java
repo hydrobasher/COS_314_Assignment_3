@@ -123,22 +123,19 @@ public class LogicalProgram {
         return 1 + numberOfNonLeafNodes(node.YES) + numberOfNonLeafNodes(node.NO);
     }
 
+    public int numberOfNodes(Node node) {
+        if (node == null) return 0;
+
+        return 1 + numberOfNodes(node.YES) + numberOfNodes(node.NO);
+    }
+
     // returns a random non leaf node
     // The actual random node will be 50% chance left, 50% chance right
     public logicalNode getRandomNode() {
         int numNodes = numberOfNonLeafNodes(this.root);
         int[] target = {(int) (Math.random() * numNodes)};
-        int shi = target[0];
     
         Node temp = getNodeHelper(root, target);
-
-        if (temp == null || temp.isLeaf) {
-            System.out.println("CHECK GET RANDOM NODE");
-            System.out.println(numNodes);
-            System.out.println(shi);
-            this.print();
-            return null;
-        }
 
         return (logicalNode) temp;
     }
@@ -178,7 +175,44 @@ public class LogicalProgram {
         return getDepthHelper(this.root);
     }
 
-    public void mutate(Random random) {
+    private Node getNodeV2Helper(Node node, int[] target) {
+        if (node == null)
+            return null;
 
+        if (target[0] == 0) return node;
+        target[0]--;
+
+        Node left = getNodeV2Helper(node.YES, target);
+
+        if (left != null) 
+            return left;
+
+        return getNodeV2Helper(node.NO, target);
+    }
+
+    private Node getRandomNodeV2() {
+        int numNodes = numberOfNodes(this.root);
+        int[] target = {(int) (Math.random() * numNodes)};
+    
+        Node temp = getNodeV2Helper(root, target);
+
+        return (logicalNode) temp;
+    }
+
+    public void mutate(Random random) {
+        Node node = getRandomNodeV2();
+
+        if (node == null) {
+            System.out.println("CHECK MUTATE");
+            this.print();
+        }
+
+        if (node.isLeaf) {
+            ((logicalLeaf) node).recurrence = random.nextBoolean();
+        } else {
+            logicalNode n = (logicalNode) node;
+            n.attribute = random.nextInt(9) + 1;
+            n.value = random.nextInt(n.randomHelper(n.attribute));
+        }
     }
 }
