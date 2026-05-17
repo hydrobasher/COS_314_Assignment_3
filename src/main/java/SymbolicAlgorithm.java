@@ -21,23 +21,70 @@ public class SymbolicAlgorithm {
     SymbolicNode[] population;
 
     public static void main(String[]args){
-        SymbolicAlgorithm sm = new SymbolicAlgorithm(5, 0.5, 0.5, 3, 314);
-        sm.generateInitialPopulation();
-
         dataset ds = new dataset("src/main/java/Breast_train.csv");
 
-        PriorityQueue<Solution> fitnessScores = sm.evaluateFitness(ds.data)
+        SymbolicAlgorithm sm = new SymbolicAlgorithm(3, 0.95, 0.9, 2, 314);
+        sm.generateInitialPopulation();
+        PriorityQueue<Solution> fitnessScores = sm.evaluateFitness(ds.data);
+        ArrayList<Solution> sortedPopulation = new ArrayList<>();
+
         for (int i = 0; i < sm.maxGenerations; i++) {
-            //select fitter
-            //sex
-            //calc new fitness
+            System.out.println("Best Individual: " + fitnessScores.peek().root.toString()
+                    + "\nFitness Score: " + (1.0-fitnessScores.peek().fitness));
+
+            SymbolicNode theBest = fitnessScores.peek().root.cloneSubTree();
+
+            sortedPopulation.clear();
+            selectionTransforms(sortedPopulation, fitnessScores);
+
+            ArrayList<SymbolicNode> offspring = sm.crossover(sortedPopulation);
+            offspring = sm.mutatePopulation(offspring);
+
+            sm.population[0] = theBest;
+            for (int j = 0; j < offspring.size() && j + 1 < sm.populationSize; j++) {
+                sm.population[j + 1] = offspring.get(j);
+            }
+
+            fitnessScores = sm.evaluateFitness(ds.data);
         }
-        System.out.println(sm.population[0]);
     }
 
+    private ArrayList<SymbolicNode> mutatePopulation(ArrayList<SymbolicNode> offspring) {
+        for (int i = 0; i < offspring.size(); i++) {
+            if(random.nextDouble()<mutationRate){
+                int mutationPoint = random.nextInt(offspring.get(i).size());
+                offspring.get(i).get(new int[]{mutationPoint}).mutate(random);
+            }
+        }
+        return offspring;
+    }
+
+    private static void selectionTransforms(ArrayList<Solution> sortedPopulation,
+                                            PriorityQueue<Solution> fitnessScores) {
+        ArrayList<Solution> temp = new ArrayList<>();
+        while (!fitnessScores.isEmpty()) {
+            temp.add(fitnessScores.poll());
+        }
+        Collections.reverse(temp);
+        sortedPopulation.addAll(temp);
+
+        double total = 0.0;
+        for (Solution s : sortedPopulation) {
+            double inv = 1.0 / (1.0 + s.fitness);
+            s.fitness = inv;
+            total += inv;
+        }
+
+        double cumulative = 0.0;
+        for (Solution s : sortedPopulation) {
+            double normalized = s.fitness / total;
+            s.fitness = cumulative + normalized;
+            cumulative += normalized;
+        }
+    }
     static class Solution implements Comparable<Solution> {
-        final SymbolicNode root;  // simplified: use your own tree structure
-        final double fitness;
+        final SymbolicNode root;
+        double fitness;
 
         Solution(SymbolicNode root, double fitness) {
             this.root = root;
@@ -136,8 +183,8 @@ public class SymbolicAlgorithm {
         }
     }
 
-    private void populateEncodedTerminals(double chooser, boolean[] value) {
-        double ninth=1/9;
+    static void populateEncodedTerminals(double chooser, boolean[] value) {
+        double ninth=1.0/9.0;
         if (chooser < ninth) {// 0000
             value[0] = false;
             value[1] = false;
@@ -186,7 +233,7 @@ public class SymbolicAlgorithm {
         }
     }
 
-    private boolean populateEncodedFunctions(double chooser, boolean[] function){
+    static boolean populateEncodedFunctions(double chooser, boolean[] function){
         double seventh = 1.0 / 7.0;
         if (chooser < seventh) {
             function[0] = false;
@@ -227,95 +274,72 @@ public class SymbolicAlgorithm {
     }
 
     /*
-    calculates the mean square error of each solution for each entry of sample data
+    calculates the accuracy of each solution for each entry of sample data
     returns an array of the results.
      */
-    public PriorityQueue evaluateFitness(ArrayList<boob> data){
-        PriorityQueue<Solution> minHeap= new PriorityQueue<Solution>();
+    public PriorityQueue<Solution> evaluateFitness(ArrayList<boob> data) {
+        PriorityQueue<Solution> minHeap = new PriorityQueue<>();
+
         for (int i = 0; i < populationSize; i++) {
-            double meanSquareError = 0.0;
-            for(boob dataPoint:data){
-                double temp = dataPoint.recurrence-population[i].resolve(dataPoint);
-                temp*=temp;
-                meanSquareError+=temp;
+            int correct = 0;
+
+            for (boob dataPoint : data) {
+                double output = population[i].resolve(dataPoint);
+                int predicted = (output > 0) ? 1 : 0; // threshold = 0
+                if (predicted == dataPoint.recurrence) {
+                    correct++;
+                }
             }
-            meanSquareError/=data.size();
-            minHeap.add(new Solution(population[i], meanSquareError));
+
+            double accuracy = (double) correct / data.size();
+            double errorRate = 1.0 - accuracy;
+
+            minHeap.add(new Solution(population[i], errorRate));
         }
+
         return minHeap;
     }
 
-    /*
-    FUNCTION crossover_population(selected[], pc, max_depth)
-    // selected[] is an array of individuals (size N, usually even)
-    // pc = crossover probability per pair
-    // max_depth = maximum allowed tree depth
-    offspring = new array of size N
-
-    FOR i = 0 TO N-1 STEP 2:
-        parent1 = selected[i]
-        parent2 = selected[i+1]
-
-        // Apply crossover with probability pc
-        IF random() <= pc THEN
-            // Choose random crossover points in each parent
-            node1 = random_node(parent1)   // any node (internal or leaf)
-            node2 = random_node(parent2)
-
-            // Swap subtrees
-            subtree1 = copy_subtree(node1)
-            subtree2 = copy_subtree(node2)
-
-            child1 = replace_subtree(parent1, node1, subtree2)
-            child2 = replace_subtree(parent2, node2, subtree1)
-
-            // Enforce depth limit (if exceeded, revert to parents)
-            IF depth(child1) <= max_depth AND depth(child2) <= max_depth THEN
-                offspring[i] = child1
-                offspring[i+1] = child2
-            ELSE
-                offspring[i] = copy(parent1)
-                offspring[i+1] = copy(parent2)
-            END IF
-        ELSE
-            // No crossover: copy parents unchanged
-            offspring[i] = copy(parent1)
-            offspring[i+1] = copy(parent2)
-        END IF
-    END FOR
-
-    RETURN offspring
-END FUNCTION
-     */
-    public ArrayList<SymbolicNode> crossover(ArrayList<SymbolicNode> selection){
+    public ArrayList<SymbolicNode> crossover(ArrayList<Solution> selection){
         ArrayList<SymbolicNode> offspring = new ArrayList<>();
 
-        for (int i = 0; i < selection.size(); i+=2) {
-            SymbolicNode parent1 = selection.get(i);
-            SymbolicNode parent2 = selection.get(i+1);
+        while (offspring.size()<populationSize-1) {
+            SymbolicNode parent1 = selectOne(selection);
+            SymbolicNode parent2 = selectOne(selection);
 
-            if(random.nextDouble()<=crossoverRate){
-                int parent1CrossPoint = random.nextInt(parent1.size()-1);
-                int parent2CrossPoint = random.nextInt(parent2.size()-1);
+            if(random.nextDouble()<crossoverRate){
+                int parent1CrossPoint = 1 + random.nextInt(parent1.size() - 1);
+                int parent2CrossPoint = 1 + random.nextInt(parent2.size() - 1);
 
-                SymbolicNode subtree1 = parent1.get(parent1CrossPoint);
-                SymbolicNode subtree2 = parent2.get(parent2CrossPoint);
+                SymbolicNode subtree1 = parent1.get(new int[]{parent1CrossPoint});
+                SymbolicNode subtree2 = parent2.get(new int[]{parent2CrossPoint});
 
                 if(subtree1==null||subtree2==null) throw new IllegalStateException("Subtree's selected for crossover cannot be null");
 
                 SymbolicNode child1 = parent1.cloneSubTree();
-                child1.set(parent1CrossPoint, subtree2);
                 SymbolicNode child2 = parent2.cloneSubTree();
-                child2.set(parent2CrossPoint, subtree1);
+
+                child1.set(new int[]{parent1CrossPoint}, subtree2.cloneSubTree());
+                child2.set(new int[]{parent2CrossPoint}, subtree1.cloneSubTree());
 
                 offspring.add((child1.getDepth()>maxOffspringDepth)?parent1:child1);
                 offspring.add((child2.getDepth()>maxOffspringDepth)?parent2:child2);
             }
             else {
-                offspring.add(parent1);
-                offspring.add(parent2);
+                offspring.add(parent1.cloneSubTree());
+                offspring.add(parent2.cloneSubTree());
             }
         }
         return offspring;
+    }
+
+    private SymbolicNode selectOne(ArrayList<Solution> selection) {
+        double chooser = random.nextDouble();
+        for (int i = 0; i < selection.size(); i++) {
+            if (chooser <= selection.get(i).fitness) {
+                return selection.get(i).root;
+            }
+        }
+        return selection.getLast().root;
     }
 }

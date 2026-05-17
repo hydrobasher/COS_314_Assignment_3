@@ -1,3 +1,6 @@
+import java.util.Arrays;
+import java.util.Random;
+
 import static java.lang.Math.max;
 
 public class SymbolicNode {
@@ -43,21 +46,21 @@ public class SymbolicNode {
 
     double resolve(boob data) {
         if (isTerminal) {
-            if (!function[0] && !function[1] && !function[2] && !function[3]) { // 0000
+            if (!value[0] && !value[1] && !value[2] && !value[3]) { // 0000
                 return data.age;
-            } else if (!function[0] && !function[1] && !function[2] && function[3]) { // 0001
+            } else if (!value[0] && !value[1] && !value[2] && value[3]) { // 0001
                 return data.menopause;
-            } else if (!function[0] && !function[1] && function[2] && !function[3]) { // 0010
+            } else if (!value[0] && !value[1] && value[2] && !value[3]) { // 0010
                 return data.tumor_size;
-            } else if (!function[0] && !function[1] && function[2] && function[3]) { // 0011
+            } else if (!value[0] && !value[1] && value[2] && value[3]) { // 0011
                 return data.inv_nodes;
-            } else if (!function[0] && function[1] && !function[2] && !function[3]) { // 0100
+            } else if (!value[0] && value[1] && !value[2] && !value[3]) { // 0100
                 return data.node_caps;
-            } else if (!function[0] && function[1] && !function[2] && function[3]) { // 0101
+            } else if (!value[0] && value[1] && !value[2] && value[3]) { // 0101
                 return data.deg_malig;
-            } else if (!function[0] && function[1] && function[2] && !function[3]) { // 0110
+            } else if (!value[0] && value[1] && value[2] && !value[3]) { // 0110
                 return data.breast;
-            } else if (!function[0] && function[1] && function[2] && function[3]) { // 0111
+            } else if (!value[0] && value[1] && value[2] && value[3]) { // 0111
                 return data.breast_quad;
             } else { // 1000
                 return data.irradiat;
@@ -87,7 +90,15 @@ public class SymbolicNode {
 
     public String toString() {
         if (isTerminal) {
-            return "x";
+            if (!value[0] && !value[1] && !value[2] && !value[3]) return "age";
+            else if (!value[0] && !value[1] && !value[2] && value[3]) return "menopause";
+            else if (!value[0] && !value[1] && value[2] && !value[3]) return "tumor_size";
+            else if (!value[0] && !value[1] && value[2] && value[3]) return "inv_nodes";
+            else if (!value[0] && value[1] && !value[2] && !value[3]) return "node_caps";
+            else if (!value[0] && value[1] && !value[2] && value[3]) return "deg_malig";
+            else if (!value[0] && value[1] && value[2] && !value[3]) return "breast";
+            else if (!value[0] && value[1] && value[2] && value[3]) return "breast_quad";
+            else return "irradiat";
         }
 
         if (!function[0] && !function[1] && !function[2]) {//+ 000
@@ -118,41 +129,46 @@ public class SymbolicNode {
     }
 
     SymbolicNode cloneSubTree(){
-        SymbolicNode root = new SymbolicNode(function, value, isTerminal, null, null);
-        if(left!=null) root.setLeft(root.left.cloneSubTree());
-        if(right!=null) root.setRight(root.right.cloneSubTree());
+        boolean[] clonedFunction = function != null ? Arrays.copyOf(function, function.length) : null;
+        boolean[] clonedValue = value != null ? Arrays.copyOf(value, value.length) : null;
+        SymbolicNode root = new SymbolicNode(clonedFunction, clonedValue, isTerminal, null, null);
+        if (left != null) root.setLeft(left.cloneSubTree());
+        if (right != null) root.setRight(right.cloneSubTree());
         return root;
     }
 
-    SymbolicNode get(Integer i){
-        if(i==0){
-            return this;
+    SymbolicNode get(int[] i) {
+        if (i[0] == 0) return this;
+        i[0]--;
+
+        if (left != null) {
+            SymbolicNode result = left.get(i);
+            if (result != null) return result;
         }
-        i--;
-        if(left!=null){
-            SymbolicNode left = this.left.get(i);
-            if(i==0) return left;
-            return right.get(i);
-        }
-        if(right!=null){
-            return right.get(i);
+        if (right != null) {
+            SymbolicNode result = right.get(i);
+            if (result != null) return result;
         }
         return null;
     }
 
-    void set(Integer i, SymbolicNode newSubtree){
-        if(i==1){
-            this.left=newSubtree;
+    /**
+     * Replaces the node at pre-order index i with newSubtree.
+     * Returns the number of nodes consumed so the caller can track progress.
+     */
+    boolean set(int[] i, SymbolicNode newSubtree) {
+        if (i[0] == 0) return false;
+        i[0]--;
+
+        if (left != null) {
+            if (i[0] == 0) { left = newSubtree; return true; }
+            if (left.set(i, newSubtree)) return true;
         }
-        i--;
-        if(left!=null){
-            this.left.set(i, newSubtree);
-            if(i==1) this.right=newSubtree;
-            else this.right.set(i, newSubtree);
+        if (right != null) {
+            if (i[0] == 0) { right = newSubtree; return true; }
+            if (right.set(i, newSubtree)) return true;
         }
-        if(this.right!=null){
-            this.right.set(i, newSubtree);
-        }
+        return false;
     }
 
     int getDepth(){
@@ -162,4 +178,72 @@ public class SymbolicNode {
 
         return 1+max(left.getDepth(),right.getDepth());
     }
+
+    public void mutate(Random random) {
+        if(isTerminal){
+            SymbolicAlgorithm.populateEncodedTerminals(random.nextDouble(), this.value);
+        }
+        else{
+
+            if (!function[0] && !function[1] && !function[2]) {//+ 000
+                binaryFunctionMutate(random);
+            } else if (!function[0] && !function[1] && function[2]) {//- 001
+                binaryFunctionMutate(random);
+            } else if (!function[0] && function[1] && !function[2]) {//- unary 010
+                unaryFunctionMutate(random);
+            } else if (!function[0] && function[1] && function[2]) {//* 011
+                binaryFunctionMutate(random);
+            } else if (function[0] && !function[1] && !function[2]) {// / 100
+                binaryFunctionMutate(random);
+            } else if (function[0] && !function[1] && function[2]) {// / unary 101
+                unaryFunctionMutate(random);
+            } else if (function[0] && function[1] && !function[2]) {// * squared unary 110
+                unaryFunctionMutate(random);
+            } else {
+                throw new IllegalStateException("Illegal function encoding");
+            }
+        }
+    }
+
+    private void unaryFunctionMutate(Random random) {
+        double chooser = random.nextDouble();
+        double third=1.0/3.0;
+        if (chooser < third) {
+            function[0] = false;
+            function[1] = true;
+            function[2] = false;
+        }
+        else if (chooser < third * 2) {
+            function[0] = true;
+            function[1] = false;
+            function[2] = true;
+        } else {
+            function[0] = true;
+            function[1] = true;
+            function[2] = false;
+        }
+    }
+
+    private void binaryFunctionMutate(Random random) {
+        double chooser = random.nextDouble();
+        if (chooser < 0.25) {
+            function[0] = false;
+            function[1] = false;
+            function[2] = false;
+        } else if (chooser < 0.5) {
+            function[0] = false;
+            function[1] = false;
+            function[2] = true;
+        } else if (chooser < 0.75) {
+            function[0] = false;
+            function[1] = true;
+            function[2] = true;
+        } else {
+            function[0] = true;
+            function[1] = false;
+            function[2] = false;
+        }
+    }
+
+
 }
