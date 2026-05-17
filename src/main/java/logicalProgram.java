@@ -215,4 +215,26 @@ public class LogicalProgram {
             n.value = random.nextInt(n.randomHelper(n.attribute));
         }
     }
+
+    private void toStringHelper(Node node, StringBuilder sb, int depth) {
+        if (node == null) return;
+
+        for (int i = 0; i < depth; i++) {
+            sb.append("\t");
+        }
+
+        if (node.isLeaf) {
+            sb.append("Leaf: recurrence = " + ((logicalLeaf) node).recurrence + "\n");
+        } else {
+            sb.append("Node: attribute " + ((logicalNode) node).attribute + " < " + ((logicalNode) node).value + "\n");
+            toStringHelper(node.YES, sb, depth + 1);
+            toStringHelper(node.NO, sb, depth + 1);
+        }
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        toStringHelper(this.root, sb, 0);
+        return sb.toString();
+    }
 }

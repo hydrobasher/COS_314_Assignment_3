@@ -21,14 +21,19 @@ public class LogicalAlgorithm {
     LogicalProgram[] population;
 
     public static void main(String[]args){
-        dataset ds = new dataset("src/main/java/Breast_train.csv");
+        boolean trainingDemo = false;
+        if (args.length > 0 && args[0].equals("training")) {
+            trainingDemo = true;
+        }
+
+        dataset ds = new dataset("Breast_train.csv");
 
         Random bigR = new Random(314);
-        int runs=30;
+        int runs = (trainingDemo) ? 2 : 10;
         Solution[] bestIndividuals = new Solution[runs];
         long[] runTimes = new long[runs];
-        run(bigR, ds, bestIndividuals, runs, runTimes);
-        ds = new dataset("src/main/java/Breast_test.csv");
+        run(bigR, ds, bestIndividuals, runs, runTimes, trainingDemo);
+        ds = new dataset("Breast_test.csv");
 
         int[][] fMeasureTracker = new int[runs][];
 
@@ -85,7 +90,7 @@ public class LogicalAlgorithm {
         System.out.println("Average Run Time: "+avgRunTime);
     }
 
-    private static void run(Random bigR, dataset ds, Solution[] bestIndividuals, int runs, long[] runTimes) {
+    private static void run(Random bigR, dataset ds, Solution[] bestIndividuals, int runs, long[] runTimes, boolean trainingDemo) {
         for (int k = 0; k < runs; k++) {
             long startTime = System.currentTimeMillis();
             LogicalAlgorithm sm = new LogicalAlgorithm(3, 0.95, 0.9, 2, bigR.nextLong());
@@ -94,7 +99,9 @@ public class LogicalAlgorithm {
             ArrayList<Solution> sortedPopulation = new ArrayList<>();
 
             for (int i = 0; i < sm.maxGenerations; i++) {
-                //System.out.println("Best Individual: " + fitnessScores.peek().root.toString()+ "\nFitness Score: " + (1.0-fitnessScores.peek().fitness));
+                if (trainingDemo && k != 0) {
+                    System.out.println("Best Individual: " + fitnessScores.peek().root.toString()+ "\nFitness Score: " + (1.0-fitnessScores.peek().fitness) + "\n");
+                }
                 bestIndividuals[k]=new Solution(fitnessScores.peek().root.copy(), fitnessScores.peek().fitness);
                 LogicalProgram theBest = fitnessScores.peek().root.copy();
 

@@ -21,16 +21,21 @@ public class SymbolicAlgorithm {
     SymbolicNode[] population;
 
     public static void main(String[]args){
-        dataset ds = new dataset("src/main/java/Breast_train.csv");
+        boolean trainingDemo = false;
+        if (args.length > 0 && args[0].equals("training")) {
+            trainingDemo = true;
+        }
+
+        dataset ds = new dataset("Breast_train.csv");
 
         Random bigR = new Random(314);
-        int runs=30;
+        int runs = (trainingDemo) ? 2 : 10;
         Solution[] bestIndividuals = new Solution[runs];
         long[] runTimes = new long[runs];
-        run(bigR, ds, bestIndividuals, runs, runTimes);
-        ds = new dataset("src/main/java/Breast_test.csv");
+        run(bigR, ds, bestIndividuals, runs, runTimes, trainingDemo);
+        ds = new dataset("Breast_test.csv");
 
-        double testScore[] = new double[runs];
+        double[] testScore = new double[runs];
         int[][] fMeasureTracker = new int[runs][];
 
         for (int i = 0; i < runs; i++) {
@@ -84,7 +89,7 @@ public class SymbolicAlgorithm {
         System.out.println("Average Run Time: "+avgRunTime);
     }
 
-    private static void run(Random bigR, dataset ds, Solution[] bestIndividuals, int runs, long[] runTimes) {
+    private static void run(Random bigR, dataset ds, Solution[] bestIndividuals, int runs, long[] runTimes, boolean trainingDemo) {
         for (int k = 0; k < runs; k++) {
             long startTime = System.currentTimeMillis();
             SymbolicAlgorithm sm = new SymbolicAlgorithm(3, 0.95, 0.9, 2, bigR.nextLong());
@@ -93,7 +98,9 @@ public class SymbolicAlgorithm {
             ArrayList<Solution> sortedPopulation = new ArrayList<>();
 
             for (int i = 0; i < sm.maxGenerations; i++) {
-                //System.out.println("Best Individual: " + fitnessScores.peek().root.toString()+ "\nFitness Score: " + (1.0-fitnessScores.peek().fitness));
+                if (trainingDemo && k != 0) {
+                    System.out.println("Best Individual: " + fitnessScores.peek().root.toString()+ "\nFitness Score: " + (1.0-fitnessScores.peek().fitness) + "\n");
+                }
                 bestIndividuals[k]=new Solution(fitnessScores.peek().root.cloneSubTree(), fitnessScores.peek().fitness);
                 SymbolicNode theBest = fitnessScores.peek().root.cloneSubTree();
 
@@ -101,7 +108,7 @@ public class SymbolicAlgorithm {
                 selectionTransforms(sortedPopulation, fitnessScores);
 
                 ArrayList<SymbolicNode> offspring = sm.crossover(sortedPopulation);
-                offspring = sm.mutatePopulation(offspring);
+                sm.mutatePopulation(offspring);
 
                 sm.population[0] = theBest;
                 for (int j = 0; j < offspring.size() && j + 1 < sm.populationSize; j++) {
@@ -114,14 +121,13 @@ public class SymbolicAlgorithm {
         }
     }
 
-    private ArrayList<SymbolicNode> mutatePopulation(ArrayList<SymbolicNode> offspring) {
-        for (int i = 0; i < offspring.size(); i++) {
-            if(random.nextDouble()<mutationRate){
-                int mutationPoint = random.nextInt(offspring.get(i).size());
-                offspring.get(i).get(new int[]{mutationPoint}).mutate(random);
+    private void mutatePopulation(ArrayList<SymbolicNode> offspring) {
+        for (SymbolicNode symbolicNode : offspring) {
+            if (random.nextDouble() < mutationRate) {
+                int mutationPoint = random.nextInt(symbolicNode.size());
+                symbolicNode.get(new int[]{mutationPoint}).mutate(random);
             }
         }
-        return offspring;
     }
 
     private static void selectionTransforms(ArrayList<Solution> sortedPopulation,
@@ -171,7 +177,7 @@ public class SymbolicAlgorithm {
     }
 
     void generateInitialPopulation() {
-        int depths[] = new int[initialTreeDepth - 1];
+        int[] depths = new int[initialTreeDepth - 1];
         for (int i = 2; i <= initialTreeDepth; i++) {
             depths[i - 2] = i;
         }
@@ -210,7 +216,7 @@ public class SymbolicAlgorithm {
         double chooser = random.nextDouble();
         boolean[] function = new boolean[3];
         boolean isUnary = populateEncodedFunctions(chooser, function);
-        SymbolicNode left = null, right = null;
+        SymbolicNode left, right = null;
 
         if (isUnary) {
             left = generateFullTree(currentDepth + 1);
@@ -230,17 +236,17 @@ public class SymbolicAlgorithm {
         }
         //first 9 - terminals
         //rest - functions
-        double seventeenth = 1/16;
+        double sixteenth = 1.0/16.0;
         double chooser = random.nextDouble();
 
-        if (chooser < seventeenth*9) {// terminals
-            chooser*=19/9;//expand to use with the 9 terminals
+        if (chooser < sixteenth*9) {// terminals
+            chooser*=19.0/9.0;//expand to use with the 9 terminals
             boolean[] value = new boolean[4];
             populateEncodedTerminals(chooser, value);
             return new SymbolicNode(null, value, true, null, null);
         }
         else {//functions
-            chooser=(chooser-seventeenth*9)*19/9;//expand to use with the 7 functions
+            chooser=(chooser-sixteenth*9)*19/9;//expand to use with the 7 functions
             boolean[] function = new boolean[3];
             boolean isUnary = populateEncodedFunctions(chooser, function);
             if (isUnary) return new SymbolicNode(function, null, false, generateGrowTree(currentDepth+1), null);
@@ -372,7 +378,7 @@ public class SymbolicAlgorithm {
             SymbolicNode parent1 = selectOne(selection);
             SymbolicNode parent2 = selectOne(selection);
 
-            if(random.nextDouble()<crossoverRate){
+            if (random.nextDouble() < crossoverRate && parent1.size() > 1 && parent2.size() > 1) {
                 int parent1CrossPoint = 1 + random.nextInt(parent1.size() - 1);
                 int parent2CrossPoint = 1 + random.nextInt(parent2.size() - 1);
 
