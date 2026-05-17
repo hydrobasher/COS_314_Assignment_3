@@ -1,13 +1,13 @@
 // This class represents an individual in the decision tree genetic programming algorithm.
 
 public class logicalProgramOld {
-    public NodeOld root;
+    public Node root;
 
     public logicalProgramOld() {
         this.root = null;
     }
 
-    private NodeOld copyHelper(NodeOld toCopy) {
+    private Node copyHelper(Node toCopy) {
         if (toCopy == null) return null;
 
         if (toCopy.isLeaf) {
@@ -28,7 +28,7 @@ public class logicalProgramOld {
         return copy;
     }
 
-    private NodeOld growHelper(int depth) {
+    private Node growHelper(int depth) {
         if (depth <= 0 || Math.random() < 0.1) {
             logicalLeaf leaf = new logicalLeaf();
             return leaf;
@@ -64,7 +64,7 @@ public class logicalProgramOld {
     }
 
     public boolean evaluate(breastData data) {
-        NodeOld ptr = this.root;
+        Node ptr = this.root;
 
         while (!ptr.isLeaf) {
             int value = data.getAttribute(((logicalNode) ptr).attribute);
@@ -98,7 +98,7 @@ public class logicalProgramOld {
         return (float) count / data.data.size();
     }
 
-    private NodeOld getNodeHelper(NodeOld node, int[] target) {
+    private Node getNodeHelper(Node node, int[] target) {
         if (node == null) {
             System.out.println("This should never run");
             return null;
@@ -109,7 +109,7 @@ public class logicalProgramOld {
         if (target[0] == 0) return node;
         target[0]--;
 
-        NodeOld left = getNodeHelper(node.YES, target);
+        Node left = getNodeHelper(node.YES, target);
 
         if (left != null) 
             return left;
@@ -117,7 +117,7 @@ public class logicalProgramOld {
         return getNodeHelper(node.NO, target);
     }
 
-    public int numberOfNonLeafNodes(NodeOld node) {
+    public int numberOfNonLeafNodes(Node node) {
         if (node == null || node.isLeaf) return 0;
 
         return 1 + numberOfNonLeafNodes(node.YES) + numberOfNonLeafNodes(node.NO);
@@ -130,7 +130,7 @@ public class logicalProgramOld {
         int[] target = {(int) (Math.random() * numNodes)};
         int shi = target[0];
     
-        NodeOld temp = getNodeHelper(root, target);
+        Node temp = getNodeHelper(root, target);
 
         if (temp == null || temp.isLeaf) {
             System.out.println("CHECK GET RANDOM NODE");
@@ -143,7 +143,7 @@ public class logicalProgramOld {
         return (logicalNode) temp;
     }
 
-    public void printHelper(NodeOld node, int depth) {
+    public void printHelper(Node node, int depth) {
         if (node == null) return;
 
         for (int i = 0; i < depth; i++) {

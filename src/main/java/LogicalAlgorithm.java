@@ -35,8 +35,8 @@ public class LogicalAlgorithm {
             int correct = 0;
 
             for (breastData dataPoint : ds.data) {
-                double output = bestIndividuals[i].root.resolve(dataPoint);
-                int predicted = (output > 0) ? 1 : 0; // threshold = 0
+                boolean output = bestIndividuals[i].root.resolve(dataPoint);
+                int predicted = output ? 1 : 0; // threshold = 0
                 if (predicted == dataPoint.recurrence) {
                     correct++;
                 }
@@ -74,8 +74,8 @@ public class LogicalAlgorithm {
 
             for (int i = 0; i < sm.maxGenerations; i++) {
                 //System.out.println("Best Individual: " + fitnessScores.peek().root.toString()+ "\nFitness Score: " + (1.0-fitnessScores.peek().fitness));
-                bestIndividuals[k]=new Solution(fitnessScores.peek().root.cloneSubTree(), fitnessScores.peek().fitness);
-                LogicalProgram theBest = fitnessScores.peek().root.cloneSubTree();
+                bestIndividuals[k]=new Solution(fitnessScores.peek().root.copy(), fitnessScores.peek().fitness);
+                LogicalProgram theBest = fitnessScores.peek().root.copy();
 
                 sortedPopulation.clear();
                 selectionTransforms(sortedPopulation, fitnessScores);
@@ -97,8 +97,10 @@ public class LogicalAlgorithm {
     private ArrayList<LogicalProgram> mutatePopulation(ArrayList<LogicalProgram> offspring) {
         for (int i = 0; i < offspring.size(); i++) {
             if(random.nextDouble()<mutationRate){
-                int mutationPoint = random.nextInt(offspring.get(i).size());
-                offspring.get(i).get(new int[]{mutationPoint}).mutate(random);
+                // int mutationPoint = random.nextInt(offspring.get(i).size());
+                // offspring.get(i).get(new int[]{mutationPoint}).mutate(random);
+
+                offspring.get(i).mutate(random);
             }
         }
         return offspring;
@@ -166,155 +168,23 @@ public class LogicalAlgorithm {
             int growCount = perLevel - fullCount;
 
             for (int i = 0; i < fullCount; i++) {
-                population[tail] = generateFullTree(0);
+                LogicalProgram program = new LogicalProgram();
+                program.full(d);
+                population[tail] = program;
                 tail++;
             }
 
             for (int i = 0; i < growCount; i++) {
-                population[tail] = generateGrowTree(0);
+                LogicalProgram program = new LogicalProgram();
+                program.grow(d);
+                population[tail] = program;
                 tail++;
             }
         }
         for (int i = 0; i < remainder; i++) {
-            population[i] = generateGrowTree(0);
-        }
-    }
-
-    LogicalProgram generateFullTree(int currentDepth) {
-        if (currentDepth == maxOffspringDepth) {
-            double chooser = random.nextDouble();
-            boolean[] value = new boolean[4];
-            populateEncodedTerminals(chooser, value);
-            return new LogicalProgram(new boolean[]{false, false, false}, value, true, null, null);
-        }
-        double chooser = random.nextDouble();
-        boolean[] function = new boolean[3];
-        boolean isUnary = populateEncodedFunctions(chooser, function);
-        LogicalProgram left = null, right = null;
-
-        if (isUnary) {
-            left = generateFullTree(currentDepth + 1);
-        } else {
-            left = generateFullTree(currentDepth + 1);
-            right = generateFullTree(currentDepth + 1);
-        }
-        return new LogicalProgram(function, null, false, left, right);
-    }
-
-    LogicalProgram generateGrowTree(int currentDepth){
-        if(currentDepth==maxOffspringDepth){
-            double chooser = random.nextDouble();
-            boolean[] value = new boolean[4];
-            populateEncodedTerminals(chooser, value);
-            return new LogicalProgram(new boolean[]{false, false, false}, value, true, null, null);
-        }
-        //first 9 - terminals
-        //rest - functions
-        double seventeenth = 1/16;
-        double chooser = random.nextDouble();
-
-        if (chooser < seventeenth*9) {// terminals
-            chooser*=19/9;//expand to use with the 9 terminals
-            boolean[] value = new boolean[4];
-            populateEncodedTerminals(chooser, value);
-            return new LogicalProgram(null, value, true, null, null);
-        }
-        else {//functions
-            chooser=(chooser-seventeenth*9)*19/9;//expand to use with the 7 functions
-            boolean[] function = new boolean[3];
-            boolean isUnary = populateEncodedFunctions(chooser, function);
-            if (isUnary) return new LogicalProgram(function, null, false, generateGrowTree(currentDepth+1), null);
-            else return new LogicalProgram(function, null, false, generateGrowTree(currentDepth+1), generateGrowTree(currentDepth+1));
-        }
-    }
-
-    static void populateEncodedTerminals(double chooser, boolean[] value) {
-        double ninth=1.0/9.0;
-        if (chooser < ninth) {// 0000
-            value[0] = false;
-            value[1] = false;
-            value[2] = false;
-            value[3] = false;
-        } else if (chooser < ninth * 2) {// 0001
-            value[0] = false;
-            value[1] = false;
-            value[2] = false;
-            value[3] = true;
-        } else if (chooser < ninth * 3) {// 0010
-            value[0] = false;
-            value[1] = false;
-            value[2] = true;
-            value[3] = false;
-        } else if (chooser < ninth * 4) {// 0011
-            value[0] = false;
-            value[1] = false;
-            value[2] = true;
-            value[3] = true;
-        } else if (chooser < ninth * 5) {// 0100
-            value[0] = false;
-            value[1] = true;
-            value[2] = false;
-            value[3] = false;
-        } else if (chooser < ninth * 6) {// 0101
-            value[0] = false;
-            value[1] = true;
-            value[2] = false;
-            value[3] = true;
-        } else if (chooser < ninth * 7) {// 0110
-            value[0] = false;
-            value[1] = true;
-            value[2] = true;
-            value[3] = false;
-        } else if (chooser < ninth * 8) {// 0111
-            value[0] = false;
-            value[1] = true;
-            value[2] = true;
-            value[3] = true;
-        } else {// 1000
-            value[0] = true;
-            value[1] = false;
-            value[2] = false;
-            value[3] = false;
-        }
-    }
-
-    static boolean populateEncodedFunctions(double chooser, boolean[] function){
-        double seventh = 1.0 / 7.0;
-        if (chooser < seventh) {
-            function[0] = false;
-            function[1] = false;
-            function[2] = false;
-            return false;
-        } else if (chooser < seventh * 2) {
-            function[0] = false;
-            function[1] = false;
-            function[2] = true;
-            return false;
-        } else if (chooser < seventh * 3) {
-            function[0] = false;
-            function[1] = true;
-            function[2] = false;
-            return true;
-        } else if (chooser < seventh * 4) {
-            function[0] = false;
-            function[1] = true;
-            function[2] = true;
-            return false;
-        } else if (chooser < seventh * 5) {
-            function[0] = true;
-            function[1] = false;
-            function[2] = false;
-            return false;
-        } else if (chooser < seventh * 6) {
-            function[0] = true;
-            function[1] = false;
-            function[2] = true;
-            return true;
-        } else {
-            function[0] = true;
-            function[1] = true;
-            function[2] = false;
-            return true;
+            LogicalProgram program = new LogicalProgram();
+            program.grow(0);
+            population[i] = program;
         }
     }
 
@@ -329,8 +199,8 @@ public class LogicalAlgorithm {
             int correct = 0;
 
             for (breastData dataPoint : data) {
-                double output = population[i].resolve(dataPoint);
-                int predicted = (output > 0) ? 1 : 0; // threshold = 0
+                boolean output = population[i].resolve(dataPoint);
+                int predicted = (output) ? 1 : 0; // threshold = 0
                 if (predicted == dataPoint.recurrence) {
                     correct++;
                 }
@@ -353,26 +223,30 @@ public class LogicalAlgorithm {
             LogicalProgram parent2 = selectOne(selection);
 
             if(random.nextDouble()<crossoverRate){
-                int parent1CrossPoint = 1 + random.nextInt(parent1.size() - 1);
-                int parent2CrossPoint = 1 + random.nextInt(parent2.size() - 1);
+                LogicalProgram child1 = parent1.copy();
+                LogicalProgram child2 = parent2.copy();
 
-                LogicalProgram subtree1 = parent1.get(new int[]{parent1CrossPoint});
-                LogicalProgram subtree2 = parent2.get(new int[]{parent2CrossPoint});
+                logicalNode parentNode1 = child1.getRandomNode();
+                logicalNode parentNode2 = child2.getRandomNode();
 
-                if(subtree1==null||subtree2==null) throw new IllegalStateException("Subtree's selected for crossover cannot be null");
+                boolean crossoverSide1 = (Math.random() < 0.5);
+                boolean crossoverSide2 = (Math.random() < 0.5);
 
-                LogicalProgram child1 = parent1.cloneSubTree();
-                LogicalProgram child2 = parent2.cloneSubTree();
+                Node crossover1 = crossoverSide1 ? parentNode1.YES : parentNode1.NO;
+                Node crossover2 = crossoverSide2 ? parentNode2.YES : parentNode2.NO;
 
-                child1.set(new int[]{parent1CrossPoint}, subtree2.cloneSubTree());
-                child2.set(new int[]{parent2CrossPoint}, subtree1.cloneSubTree());
+                if (crossoverSide1) parentNode1.YES = crossover2;
+                else parentNode1.NO = crossover2;
+
+                if (crossoverSide2) parentNode2.YES = crossover1;
+                else parentNode2.NO = crossover1;
 
                 offspring.add((child1.getDepth()>maxOffspringDepth)?parent1:child1);
                 offspring.add((child2.getDepth()>maxOffspringDepth)?parent2:child2);
             }
             else {
-                offspring.add(parent1.cloneSubTree());
-                offspring.add(parent2.cloneSubTree());
+                offspring.add(parent1.copy());
+                offspring.add(parent2.copy());
             }
         }
         return offspring;

@@ -1,3 +1,5 @@
+import java.util.Random;
+
 public class LogicalProgram {
     public Node root;
 
@@ -61,7 +63,7 @@ public class LogicalProgram {
         }
     }
 
-    public boolean evaluate(breastData data) {
+    public boolean resolve(breastData data) {
         Node ptr = this.root;
 
         while (!ptr.isLeaf) {
@@ -88,7 +90,7 @@ public class LogicalProgram {
 
         for (int i = 0; i < 2 && i < data.data.size(); i++) {
             breastData b = data.data.get(i);
-            boolean correct = evaluate(b) == (b.recurrence == 1);
+            boolean correct = resolve(b) == (b.recurrence == 1);
 
             if (correct)
                 count++;
@@ -159,5 +161,24 @@ public class LogicalProgram {
 
     public void print() {
         printHelper(this.root, 0);
+    }
+
+    private int getDepthHelper(Node node) {
+        if (node == null) return 0;
+
+        if (node.isLeaf) return 1;
+
+        int leftDepth = getDepthHelper(node.YES);
+        int rightDepth = getDepthHelper(node.NO);
+
+        return 1 + Math.max(leftDepth, rightDepth);
+    }
+
+    public int getDepth() {
+        return getDepthHelper(this.root);
+    }
+
+    public void mutate(Random random) {
+
     }
 }

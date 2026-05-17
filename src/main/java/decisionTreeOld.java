@@ -98,8 +98,8 @@ public class decisionTreeOld {
             boolean crossoverSide1 = (Math.random() < 0.5);
             boolean crossoverSide2 = (Math.random() < 0.5);
 
-            NodeOld crossover1 = crossoverSide1 ? parent1.YES : parent1.NO;
-            NodeOld crossover2 = crossoverSide2 ? parent2.YES : parent2.NO;
+            Node crossover1 = crossoverSide1 ? parent1.YES : parent1.NO;
+            Node crossover2 = crossoverSide2 ? parent2.YES : parent2.NO;
 
             if (crossoverSide1) parent1.YES = crossover2;
             else parent1.NO = crossover2;
