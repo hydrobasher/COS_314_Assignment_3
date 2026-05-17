@@ -23,29 +23,74 @@ public class SymbolicAlgorithm {
     public static void main(String[]args){
         dataset ds = new dataset("src/main/java/Breast_train.csv");
 
-        SymbolicAlgorithm sm = new SymbolicAlgorithm(3, 0.95, 0.9, 2, 314);
-        sm.generateInitialPopulation();
-        PriorityQueue<Solution> fitnessScores = sm.evaluateFitness(ds.data);
-        ArrayList<Solution> sortedPopulation = new ArrayList<>();
+        Random bigR = new Random(314);
+        int runs=30;
+        Solution[] bestIndividuals = new Solution[runs];
+        long[] runTimes = new long[runs];
+        run(bigR, ds, bestIndividuals, runs, runTimes);
+        ds = new dataset("src/main/java/Breast_test.csv");
 
-        for (int i = 0; i < sm.maxGenerations; i++) {
-            System.out.println("Best Individual: " + fitnessScores.peek().root.toString()
-                    + "\nFitness Score: " + (1.0-fitnessScores.peek().fitness));
+        double testScore[] = new double[runs];
+        for (int i = 0; i < runs; i++) {
+            int correct = 0;
 
-            SymbolicNode theBest = fitnessScores.peek().root.cloneSubTree();
-
-            sortedPopulation.clear();
-            selectionTransforms(sortedPopulation, fitnessScores);
-
-            ArrayList<SymbolicNode> offspring = sm.crossover(sortedPopulation);
-            offspring = sm.mutatePopulation(offspring);
-
-            sm.population[0] = theBest;
-            for (int j = 0; j < offspring.size() && j + 1 < sm.populationSize; j++) {
-                sm.population[j + 1] = offspring.get(j);
+            for (boob dataPoint : ds.data) {
+                double output = bestIndividuals[i].root.resolve(dataPoint);
+                int predicted = (output > 0) ? 1 : 0; // threshold = 0
+                if (predicted == dataPoint.recurrence) {
+                    correct++;
+                }
             }
 
-            fitnessScores = sm.evaluateFitness(ds.data);
+            double accuracy = (double) correct / ds.data.size();
+            testScore[i]=accuracy;
+
+            System.out.println("Run "+(i+1)+": "+(1.0-bestIndividuals[i].fitness)+ "\tTest Score: "+accuracy+"\t Runtime: "+ runTimes[i]+ " ms");
+        }
+        double avgTrainingScore = 0.0;
+        double avgTestScore = 0.0;
+        long avgRunTime = 0;
+        for (int i = 0; i < runs; i++) {
+            avgTrainingScore+=1.0-bestIndividuals[i].fitness;
+            avgTestScore+=testScore[i];
+            avgRunTime+=runTimes[i];
+        }
+        avgTrainingScore/=runs;
+        avgTestScore/=runs;
+        avgRunTime/=runs;
+
+        System.out.println("\nAverage Training Score: "+avgTrainingScore);
+        System.out.println("Average Test Score: "+avgTestScore);
+        System.out.println("Average Run Time: "+avgRunTime);
+    }
+
+    private static void run(Random bigR, dataset ds, Solution[] bestIndividuals, int runs, long[] runTimes) {
+        for (int k = 0; k < runs; k++) {
+            long startTime = System.currentTimeMillis();
+            SymbolicAlgorithm sm = new SymbolicAlgorithm(3, 0.95, 0.9, 2, bigR.nextLong());
+            sm.generateInitialPopulation();
+            PriorityQueue<Solution> fitnessScores = sm.evaluateFitness(ds.data);
+            ArrayList<Solution> sortedPopulation = new ArrayList<>();
+
+            for (int i = 0; i < sm.maxGenerations; i++) {
+                //System.out.println("Best Individual: " + fitnessScores.peek().root.toString()+ "\nFitness Score: " + (1.0-fitnessScores.peek().fitness));
+                bestIndividuals[k]=new Solution(fitnessScores.peek().root.cloneSubTree(), fitnessScores.peek().fitness);
+                SymbolicNode theBest = fitnessScores.peek().root.cloneSubTree();
+
+                sortedPopulation.clear();
+                selectionTransforms(sortedPopulation, fitnessScores);
+
+                ArrayList<SymbolicNode> offspring = sm.crossover(sortedPopulation);
+                offspring = sm.mutatePopulation(offspring);
+
+                sm.population[0] = theBest;
+                for (int j = 0; j < offspring.size() && j + 1 < sm.populationSize; j++) {
+                    sm.population[j + 1] = offspring.get(j);
+                }
+
+                fitnessScores = sm.evaluateFitness(ds.data);
+            }
+            runTimes[k] = System.currentTimeMillis()-startTime;
         }
     }
 
